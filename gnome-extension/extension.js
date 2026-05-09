@@ -71,11 +71,12 @@ export default class AsusMouseBatteryExtension extends Extension {
             DBUS_PATH,
             DBUS_IFACE,
             null,
-            (obj, res) => {
+            (_obj, res) => {
                 try {
                     this._proxy = Gio.DBusProxy.new_for_bus_finish(res);
                 } catch (e) {
                     console.error('[asus-mouse-battery] proxy creation failed:', e);
+                    this._proxy = null;
                     return;
                 }
 
@@ -112,6 +113,7 @@ export default class AsusMouseBatteryExtension extends Extension {
 
     _update() {
         try {
+            if (!this._proxy || !this._indicator) return;
             if (!this._proxy.g_name_owner) {
                 this._indicator.hide();
                 return;
