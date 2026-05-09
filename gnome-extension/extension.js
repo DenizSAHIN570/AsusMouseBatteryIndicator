@@ -1,6 +1,7 @@
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import St from 'gi://St';
@@ -46,6 +47,17 @@ export default class AsusMouseBatteryExtension extends Extension {
         this._box.add_child(this._icon);
         this._box.add_child(this._label);
         this._indicator.add_child(this._box);
+
+        // Popup menu rows
+        this._nameItem = new PopupMenu.PopupMenuItem('', {reactive: false});
+        this._indicator.menu.addMenuItem(this._nameItem);
+        this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this._statusItem = new PopupMenu.PopupMenuItem('', {reactive: false});
+        this._timeItem = new PopupMenu.PopupMenuItem('', {reactive: false});
+        this._voltageItem = new PopupMenu.PopupMenuItem('', {reactive: false});
+        this._indicator.menu.addMenuItem(this._statusItem);
+        this._indicator.menu.addMenuItem(this._timeItem);
+        this._indicator.menu.addMenuItem(this._voltageItem);
 
         Main.panel.addToStatusArea(this.uuid, this._indicator);
         this._indicator.hide();
@@ -98,8 +110,12 @@ export default class AsusMouseBatteryExtension extends Extension {
 
         const pct    = this._proxy.get_cached_property('Percentage')?.unpack()  ?? 0;
         const status = this._proxy.get_cached_property('Status')?.unpack()      ?? 'unknown';
+        const ttf    = this._proxy.get_cached_property('TimeToFull')?.unpack()  ?? 0;
+        const tte    = this._proxy.get_cached_property('TimeToEmpty')?.unpack() ?? 0;
+        const vmv    = this._proxy.get_cached_property('VoltageMv')?.unpack()   ?? 0;
+        const name   = this._proxy.get_cached_property('DeviceName')?.unpack()  ?? '';
 
-        // Icon selection
+        // Icon
         let iconName;
         if (status === 'fully-charged') {
             iconName = 'battery-full-charged-symbolic';
@@ -123,7 +139,15 @@ export default class AsusMouseBatteryExtension extends Extension {
             this._box.add_style_class_name('battery-red');
         }
 
+        // Top-bar label
         this._label.text = `${pct}%`;
+
+        // Popup rows
+        this._nameItem.label.text    = name;
+        this._statusItem.label.text  = `Status:   ${_formatStatus(status)}`;
+        this._timeItem.label.text    = `Time:     ${_formatTime(status, ttf, tte)}`;
+        this._voltageItem.label.text = `Voltage:  ${vmv} mV`;
+
         this._indicator.show();
     }
 }
