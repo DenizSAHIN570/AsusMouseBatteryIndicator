@@ -1,5 +1,9 @@
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import St from 'gi://St';
 
 const DBUS_NAME  = 'com.mousewatch.Battery';
 const DBUS_PATH  = '/com/mousewatch/Battery/device0';
@@ -27,6 +31,26 @@ function _formatTime(status, timeToFull, timeToEmpty) {
 
 export default class AsusMouseBatteryExtension extends Extension {
     enable() {
+        // Indicator button
+        this._indicator = new PanelMenu.Button(0.0, 'ASUS Mouse Battery', false);
+
+        this._box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
+        this._icon = new St.Icon({
+            icon_name: 'battery-missing-symbolic',
+            style_class: 'system-status-icon',
+        });
+        this._label = new St.Label({
+            text: '–',
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        this._box.add_child(this._icon);
+        this._box.add_child(this._label);
+        this._indicator.add_child(this._box);
+
+        Main.panel.addToStatusArea(this.uuid, this._indicator);
+        this._indicator.hide();
+
+        // DBus proxy
         this._proxy = new Gio.DBusProxy({
             g_connection: Gio.DBus.session,
             g_name: DBUS_NAME,
@@ -56,10 +80,50 @@ export default class AsusMouseBatteryExtension extends Extension {
             this._nameOwnerId = null;
         }
         this._proxy = null;
+        this._indicator?.destroy();
+        this._indicator = null;
     }
 
     _update() {
-        const hasOwner = Boolean(this._proxy.g_name_owner);
-        console.log(`[asus-mouse-battery] _update: hasOwner=${hasOwner}`);
+        if (!this._proxy.g_name_owner) {
+            this._indicator.hide();
+            return;
+        }
+
+        const isPresentVar = this._proxy.get_cached_property('IsPresent');
+        if (!isPresentVar?.unpack()) {
+            this._indicator.hide();
+            return;
+        }
+
+        const pct    = this._proxy.get_cached_property('Percentage')?.unpack()  ?? 0;
+        const status = this._proxy.get_cached_property('Status')?.unpack()      ?? 'unknown';
+
+        // Icon selection
+        let iconName;
+        if (status === 'fully-charged') {
+            iconName = 'battery-full-charged-symbolic';
+        } else if (pct > 50) {
+            iconName = 'battery-full-symbolic';
+        } else if (pct > 10) {
+            iconName = 'battery-good-symbolic';
+        } else {
+            iconName = 'battery-caution-symbolic';
+        }
+        this._icon.icon_name = iconName;
+
+        // Colour class
+        ['battery-green', 'battery-orange', 'battery-red'].forEach(c =>
+            this._box.remove_style_class_name(c));
+        if (status === 'fully-charged' || pct > 50) {
+            this._box.add_style_class_name('battery-green');
+        } else if (pct > 10) {
+            this._box.add_style_class_name('battery-orange');
+        } else {
+            this._box.add_style_class_name('battery-red');
+        }
+
+        this._label.text = `${pct}%`;
+        this._indicator.show();
     }
 }
