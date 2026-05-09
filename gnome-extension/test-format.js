@@ -1,3 +1,5 @@
+// gnome-extension/test-format.js — run with: gjs gnome-extension/test-format.js
+
 function _formatStatus(status) {
     const labels = {
         'charging': 'Charging',
@@ -32,11 +34,11 @@ const TESTS = [
 let passed = 0;
 for (const [got, expected] of TESTS) {
     if (got === expected) {
-        print(`PASS: "${expected}"`);
+        print('PASS: "' + expected + '"');
         passed++;
     } else {
-        print(`FAIL: got "${got}", expected "${expected}"`);
+        print('FAIL: got "' + got + '", expected "' + expected + '"');
     }
 }
-print(`\n${passed}/${TESTS.length} passed`);
+print('\n' + passed + '/' + TESTS.length + ' passed');
 if (passed !== TESTS.length) imports.system.exit(1);
