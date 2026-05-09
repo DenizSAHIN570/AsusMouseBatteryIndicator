@@ -1,4 +1,9 @@
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import Gio from 'gi://Gio';
+
+const DBUS_NAME  = 'com.mousewatch.Battery';
+const DBUS_PATH  = '/com/mousewatch/Battery/device0';
+const DBUS_IFACE = 'com.mousewatch.Battery1';
 
 function _formatStatus(status) {
     const labels = {
@@ -22,10 +27,39 @@ function _formatTime(status, timeToFull, timeToEmpty) {
 
 export default class AsusMouseBatteryExtension extends Extension {
     enable() {
-        console.log('[asus-mouse-battery] enabled');
+        this._proxy = new Gio.DBusProxy({
+            g_connection: Gio.DBus.session,
+            g_name: DBUS_NAME,
+            g_object_path: DBUS_PATH,
+            g_interface_name: DBUS_IFACE,
+            g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START,
+        });
+        this._proxy.init(null);
+
+        this._propsChangedId = this._proxy.connect('g-properties-changed', () => {
+            this._update();
+        });
+        this._nameOwnerId = this._proxy.connect('notify::g-name-owner', () => {
+            this._update();
+        });
+
+        this._update();
     }
 
     disable() {
-        console.log('[asus-mouse-battery] disabled');
+        if (this._propsChangedId) {
+            this._proxy.disconnect(this._propsChangedId);
+            this._propsChangedId = null;
+        }
+        if (this._nameOwnerId) {
+            this._proxy.disconnect(this._nameOwnerId);
+            this._nameOwnerId = null;
+        }
+        this._proxy = null;
+    }
+
+    _update() {
+        const hasOwner = Boolean(this._proxy.g_name_owner);
+        console.log(`[asus-mouse-battery] _update: hasOwner=${hasOwner}`);
     }
 }
