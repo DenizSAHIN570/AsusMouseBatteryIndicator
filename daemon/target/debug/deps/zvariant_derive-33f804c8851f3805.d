@@ -1,0 +1,11 @@
+/home/deniz/Documents/Projects/AsusMouseBattery/daemon/target/debug/deps/zvariant_derive-33f804c8851f3805.d: /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/lib.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/dict.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/signature.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/type.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/utils.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/value.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/../README.md
+
+/home/deniz/Documents/Projects/AsusMouseBattery/daemon/target/debug/deps/libzvariant_derive-33f804c8851f3805.so: /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/lib.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/dict.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/signature.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/type.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/utils.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/value.rs /home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/../README.md
+
+/home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/lib.rs:
+/home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/dict.rs:
+/home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/signature.rs:
+/home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/type.rs:
+/home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/utils.rs:
+/home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/value.rs:
+/home/deniz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zvariant_derive-5.11.0/src/../README.md:

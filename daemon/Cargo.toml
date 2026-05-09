@@ -1,0 +1,17 @@
+[package]
+name = "mouse-battery"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "mouse-battery"
+path = "src/main.rs"
+
+[dependencies]
+hidapi             = "2.6"
+zbus               = { version = "5", features = ["tokio"] }
+zvariant           = "5"
+tokio              = { version = "1", features = ["full"] }
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow             = "1"
