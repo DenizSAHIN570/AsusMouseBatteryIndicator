@@ -1,5 +1,5 @@
 {
-  "id": "asus-mouse-battery-icon@gnome",
+  "uuid": "asus-mouse-battery-icon@gnome",
   "name": "ASUS Mouse Battery",
   "description": "Shows ASUS wireless mouse battery level in the GNOME top bar.",
   "version": 1,
