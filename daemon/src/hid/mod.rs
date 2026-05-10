@@ -35,14 +35,11 @@ pub struct BatteryReading {
 }
 
 pub trait MouseDevice: Send + 'static {
-    fn name(&self) -> &str;
     fn query_battery(&self) -> Result<BatteryReading>;
 }
 
 pub struct HidrawMatch {
     pub dev_node: String,
-    pub vendor_id: u16,
-    pub product_id: u16,
 }
 
 /// Find all hidraw nodes matching known (vendor, product) pairs at USB Interface 0,
@@ -113,7 +110,7 @@ pub fn find_hidraw_nodes(known_ids: &[(u16, u16)]) -> Result<Vec<HidrawMatch>> {
 
         let dev_node = format!("/dev/{}", node_str);
         tracing::debug!("Candidate: {dev_node} (VID={vid:#06x} PID={pid:#06x})");
-        matches.push(HidrawMatch { dev_node, vendor_id: vid, product_id: pid });
+        matches.push(HidrawMatch { dev_node });
     }
 
     Ok(matches)

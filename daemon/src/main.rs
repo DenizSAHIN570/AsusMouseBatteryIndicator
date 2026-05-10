@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     let poll_secs: u64 = std::env::var("MOUSE_BATTERY_INTERVAL")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(30);
+        .unwrap_or(5);
 
     tokio::select! {
         _ = run_poll_loop(conn, state, Duration::from_secs(poll_secs)) => {},
@@ -72,7 +72,6 @@ async fn run_poll_loop(
                     emit_device_removed(&conn).await;
                     prev_is_present = false;
                 }
-                predictor.reset();
                 low_notified = false;
                 full_notified = false;
                 continue;

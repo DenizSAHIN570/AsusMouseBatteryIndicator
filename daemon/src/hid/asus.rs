@@ -14,7 +14,6 @@ pub const ASUS_KNOWN_IDS: &[(u16, u16)] = &[
 
 pub struct AsusDevice {
     device: hidapi::HidDevice,
-    name: String,
 }
 
 impl AsusDevice {
@@ -22,18 +21,11 @@ impl AsusDevice {
         let api = hidapi::HidApi::new()?;
         let path = CString::new(dev_node)?;
         let device = api.open_path(path.as_ref())?;
-        Ok(Self {
-            device,
-            name: "TUF GAMING MINI WL MOUSE MIKU".to_string(),
-        })
+        Ok(Self { device })
     }
 }
 
 impl MouseDevice for AsusDevice {
-    fn name(&self) -> &str {
-        &self.name
-    }
-
     fn query_battery(&self) -> Result<BatteryReading> {
         // 64-byte write: report-ID prefix (0x00) + command 0x12 0x07 + 61 zero bytes.
         let mut cmd = [0u8; 64];

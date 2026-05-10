@@ -50,7 +50,7 @@ When a wired cable and a wireless dongle are both present simultaneously, the da
 
 ### HID Protocol
 
-A 64-byte command is written to Interface 0 every 30 seconds (configurable):
+A 64-byte command is written to Interface 0 every 5 seconds (configurable):
 
 ```
 Write: [0x00, 0x12, 0x07, 0x00 × 61]
@@ -83,11 +83,16 @@ Observed voltages on the TUF Gaming Mini WL:
 
 ### Time Estimation
 
-A sliding window of the last 10 `(timestamp, percentage, voltage_mv)` readings is used to linearly extrapolate:
-- `TimeToEmpty` when discharging
-- `TimeToFull` when charging
+A ring buffer of up to 720 `(timestamp, percentage, voltage_mv)` readings (1 hour at the default 5 s poll interval) is maintained per device. The estimator uses voltage rather than integer percentage as its primary signal, because percentage quantises to 1 % steps and barely moves when the mouse drains at ~2 %/hr.
 
-Both return `0` until at least 2 readings are available (the extension shows "Calculating…"). The window resets on status change (charge ↔ discharge) to prevent stale rate data from polluting estimates.
+**Algorithm:**
+
+1. **Least-squares linear regression** is run over the voltage history on every poll to compute `dV/dt` (mV/s). Fitting a line across the full window is more stable than comparing just the two endpoints.
+2. **EWMA smoothing** (α = 0.05, ~20-sample effective window) is applied to the regression slope to absorb per-reading noise.
+3. The smoothed slope is converted to a %/s rate using a **self-calibrating `mV_per_pct` factor** (default 7.0 mV/%, empirically derived from the TUF Mini WL). Whenever the integer percentage ticks by ≥ 1 % and voltage agrees on direction, the factor is updated via a slow EWMA (α = 0.10).
+4. A **validity gate** rejects estimates outside the plausible 0.1–50 %/hr range or when the window spans less than 2 minutes. Gated estimates return `0` (the extension shows "Calculating…").
+
+The window resets only on a charge-direction change (discharge ↔ charging). Mouse sleep/wake events no longer reset the window, so accumulated history is preserved across idle periods.
 
 ---
 
@@ -203,7 +208,7 @@ RUST_LOG=mouse_battery=debug cargo run
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MOUSE_BATTERY_INTERVAL` | `30` | Poll interval in seconds |
+| `MOUSE_BATTERY_INTERVAL` | `5` | Poll interval in seconds |
 | `RUST_LOG` | — | Log filter, e.g. `mouse_battery=debug` |
 
 ---
