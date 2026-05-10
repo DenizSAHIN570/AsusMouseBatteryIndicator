@@ -16,8 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install hidapi
-        run: sudo apt-get install -y libhidapi-dev
+      - name: Install dependencies
+        run: sudo apt-get install -y libhidapi-dev libudev-dev
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
