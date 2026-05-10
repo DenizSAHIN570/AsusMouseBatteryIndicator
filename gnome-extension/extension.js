@@ -25,8 +25,10 @@ function _formatTime(status, timeToFull, timeToEmpty) {
     const seconds = status === 'charging' ? timeToFull : timeToEmpty;
     const suffix = status === 'charging' ? 'to full' : 'to empty';
     if (seconds === 0) return 'Calculating…';
-    const h = Math.floor(seconds / 3600);
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
     const m = Math.floor((seconds % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h ${m}m ${suffix}`;
     return h > 0 ? `${h}h ${m}m ${suffix}` : `${m}m ${suffix}`;
 }
 
