@@ -189,6 +189,17 @@ The response validation, fallback logic, time estimation, and DBus publishing al
 
 ---
 
+## CI / Releases
+
+| Trigger | Workflow | What it does |
+|---------|----------|--------------|
+| Push to `master` | **Build** | Compiles the daemon to verify nothing is broken |
+| `git tag v0.x.x && git push origin v0.x.x` | **Release** | Builds the daemon and publishes a GitHub Release with the binary attached |
+
+`install.sh` always downloads the binary from the latest GitHub Release, so cutting a tag is all that's needed to ship an update to users.
+
+---
+
 ## Building from Source
 
 ### Requirements
