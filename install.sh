@@ -50,14 +50,32 @@ if ! install_binary_from_release 2>/dev/null; then
 fi
 info "Daemon installed to ~/.local/bin/mouse-battery"
 
-# ── 2. udev rule (grants hidraw access without root at runtime) ──────────────
+# ── 2. udev rule + group (grants hidraw access without root at runtime) ───────
 
 info "Installing udev rule (requires sudo)…"
+
+# Ensure the plugdev group exists
+if ! getent group plugdev &>/dev/null; then
+    sudo groupadd plugdev
+fi
+
+# Add current user to plugdev if not already a member
+GROUP_ADDED=false
+if ! id -nG "$USER" | grep -qw plugdev; then
+    sudo usermod -aG plugdev "$USER"
+    GROUP_ADDED=true
+fi
+
 sudo install -Dm644 "$(dirname "$0")/udev/99-mouse-battery.rules" \
     /etc/udev/rules.d/99-mouse-battery.rules
 sudo udevadm control --reload
 sudo udevadm trigger
 info "udev rule installed."
+
+if $GROUP_ADDED; then
+    warn "Added '$USER' to the 'plugdev' group."
+    warn "You must log out and back in for device access to take effect."
+fi
 
 # ── 3. systemd user service ──────────────────────────────────────────────────
 

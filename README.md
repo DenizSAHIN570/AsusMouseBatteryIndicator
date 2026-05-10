@@ -238,15 +238,17 @@ RUST_LOG=mouse_battery=debug cargo run
 
 ## Permissions
 
-The daemon needs read/write access to `/dev/hidrawN` for the mouse's Interface 0 node. The udev rule grants this automatically on plug-in:
+The daemon needs read/write access to `/dev/hidrawN` for the mouse's Interface 0 node. The udev rule grants this via the `plugdev` group:
 
 ```bash
+sudo groupadd plugdev            # if the group does not exist yet
+sudo usermod -aG plugdev $USER   # add yourself (log out and back in after)
 sudo install -Dm644 udev/99-mouse-battery.rules /etc/udev/rules.d/
 sudo udevadm control --reload
 sudo udevadm trigger
 ```
 
-`TAG+="uaccess"` is the modern standard — udev + logind automatically grants the current console session user access. No hardcoded groups needed.
+`install.sh` handles all of this automatically. Group-based access is permanent — the dongle does not need to be replugged after each login.
 
 ---
 

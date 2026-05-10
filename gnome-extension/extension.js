@@ -51,12 +51,12 @@ export default class AsusMouseBatteryExtension extends Extension {
         this._indicator.add_child(this._box);
 
         // Popup menu rows
-        this._nameItem = new PopupMenu.PopupMenuItem('', {reactive: false});
+        this._nameItem = new PopupMenu.PopupMenuItem('');
         this._indicator.menu.addMenuItem(this._nameItem);
         this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._statusItem = new PopupMenu.PopupMenuItem('', {reactive: false});
-        this._timeItem = new PopupMenu.PopupMenuItem('', {reactive: false});
-        this._voltageItem = new PopupMenu.PopupMenuItem('', {reactive: false});
+        this._statusItem = new PopupMenu.PopupMenuItem('');
+        this._timeItem = new PopupMenu.PopupMenuItem('');
+        this._voltageItem = new PopupMenu.PopupMenuItem('');
         this._indicator.menu.addMenuItem(this._statusItem);
         this._indicator.menu.addMenuItem(this._timeItem);
         this._indicator.menu.addMenuItem(this._voltageItem);
