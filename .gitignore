@@ -1,2 +1,4 @@
 daemon/target/
 docs/superpowers/
+CLAUDE.md
+.claude/
