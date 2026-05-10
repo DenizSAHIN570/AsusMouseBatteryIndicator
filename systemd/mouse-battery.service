@@ -1,0 +1,13 @@
+[Unit]
+Description=Mouse Battery Monitor Daemon
+After=graphical-session.target dbus.socket
+Wants=dbus.socket
+
+[Service]
+ExecStart=%h/.local/bin/mouse-battery
+Restart=on-failure
+RestartSec=5
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=default.target
