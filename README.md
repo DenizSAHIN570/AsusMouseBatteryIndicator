@@ -29,6 +29,18 @@ gnome-extensions enable asus-mouse-battery-icon@gnome
 
 ---
 
+## Updating
+
+```bash
+cd AsusMouseBatteryIndicator
+git pull
+./install.sh
+```
+
+`install.sh` is idempotent — it re-downloads the latest binary, reinstalls the extension, and restarts the daemon service. No manual steps needed.
+
+---
+
 ## Components
 
 | Component | Description |
