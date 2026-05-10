@@ -197,6 +197,7 @@ async fn publish_battery_update(conn: &Connection, percentage: u8, status: &str)
     // Notify DBus clients of changed properties
     {
         let iface = iface_ref.get().await;
+        let _ = iface.device_name_changed(&emitter).await;
         let _ = iface.percentage_changed(&emitter).await;
         let _ = iface.status_changed(&emitter).await;
         let _ = iface.time_to_empty_changed(&emitter).await;
