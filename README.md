@@ -34,10 +34,10 @@ gnome-extensions enable asus-mouse-battery-icon@gnome
 ```bash
 cd AsusMouseBatteryIndicator
 git pull
-./install.sh
+./update.sh
 ```
 
-`install.sh` is idempotent — it re-downloads the latest binary, reinstalls the extension, and restarts the daemon service. No manual steps needed.
+`update.sh` verifies your installation is intact before proceeding, downloads the latest release binary, updates the GNOME extension files, and restarts the daemon service. Run `./install.sh` instead if you need a full reinstall (udev rules, systemd service, group membership).
 
 ---
 
