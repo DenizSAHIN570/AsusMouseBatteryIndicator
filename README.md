@@ -136,8 +136,8 @@ All properties emit `org.freedesktop.DBus.Properties.PropertiesChanged` on every
 | Signal | Signature | Description |
 |--------|-----------|-------------|
 | `BatteryChanged` | `(y, s)` | Fired every poll cycle with current percentage and status |
-| `BatteryLow` | `(y)` | Fired once per discharge cycle when percentage ≤ 10 |
-| `BatteryFull` | `()` | Fired once when status transitions to `fully-charged` |
+| `BatteryLow` | `(y)` | Fired once per discharge cycle when percentage ≤ 10 (re-arms above 20%) |
+| `BatteryFull` | `()` | Fired once when percentage reaches 100 (re-arms below 95%) |
 
 ### Manager
 
@@ -298,10 +298,14 @@ Two desktop notifications are sent via `org.freedesktop.Notifications`:
 
 | Trigger | Message |
 |---------|---------|
-| Percentage drops to 10% or below | "Mouse Battery Low — 10% remaining" |
-| Status becomes fully charged | "Mouse Battery Full" |
+| Percentage reaches 10% or below | "Mouse Battery Low — 10% remaining" |
+| Percentage reaches 100% | "Mouse Battery Full" |
 
-Each fires at most once per charge cycle.
+Triggers observe the battery percentage only — the charging/discharging
+status is ignored, since the firmware's status byte is unreliable. Each
+notification fires at most once per charge cycle, with hysteresis: the low
+alert re-arms once charge recovers above 20%, and the full alert re-arms
+once charge drops below 95%.
 
 ---
 

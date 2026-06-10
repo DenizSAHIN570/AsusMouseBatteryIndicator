@@ -1,11 +1,13 @@
 mod dbus;
 mod hid;
 mod notification;
+mod notifier;
 mod predictor;
 
 use anyhow::Result;
 use dbus::device::{BatteryDevice, BatteryState};
 use hid::{asus::AsusDevice, asus::ASUS_KNOWN_IDS, BatteryStatus, MouseDevice};
+use notifier::NotificationPolicy;
 use predictor::BatteryPredictor;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -56,8 +58,7 @@ async fn run_poll_loop(
     ticker.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
     let mut predictor = BatteryPredictor::new();
-    let mut low_notified = false;
-    let mut full_notified = false;
+    let mut notify_policy = NotificationPolicy::new();
     let mut prev_is_present = false;
 
     loop {
@@ -72,8 +73,7 @@ async fn run_poll_loop(
                     emit_device_removed(&conn).await;
                     prev_is_present = false;
                 }
-                low_notified = false;
-                full_notified = false;
+                notify_policy.reset();
                 continue;
             }
         };
@@ -128,33 +128,26 @@ async fn run_poll_loop(
 
         publish_battery_update(&conn, reading.percentage, effective_status.as_str()).await;
 
-        // Notification state machine
-        if effective_status == BatteryStatus::Discharging
-            && reading.percentage <= 10
-            && !low_notified
-        {
+        // Notifications are driven by percentage alone — the firmware's status
+        // byte is unreliable, and gating on it made FullyCharged unreachable
+        // (the cable forces status to Charging, but the battery can only fill
+        // while the cable is connected).
+        let fire = notify_policy.update(reading.percentage);
+
+        if fire.low {
             tracing::info!("Battery low: {}%", reading.percentage);
             if let Err(e) = notification::send_low_battery(&conn, reading.percentage).await {
                 tracing::warn!("Failed to send low-battery notification: {e:#}");
             }
-            low_notified = true;
+            emit_battery_low(&conn, reading.percentage).await;
         }
 
-        if effective_status == BatteryStatus::FullyCharged && !full_notified {
+        if fire.full {
             tracing::info!("Battery fully charged");
             if let Err(e) = notification::send_battery_full(&conn).await {
                 tracing::warn!("Failed to send full-battery notification: {e:#}");
             }
-            full_notified = true;
-        }
-
-        // Reset low-battery flag once charge recovers meaningfully
-        if reading.percentage > 20 {
-            low_notified = false;
-        }
-        // Reset full flag once device starts discharging again
-        if effective_status == BatteryStatus::Discharging {
-            full_notified = false;
+            emit_battery_full(&conn).await;
         }
     }
 }
@@ -207,6 +200,26 @@ async fn publish_battery_update(conn: &Connection, percentage: u8, status: &str)
 
     // Emit BatteryChanged signal
     let _ = BatteryDevice::battery_changed(&emitter, percentage, status.to_string()).await;
+}
+
+async fn emit_battery_low(conn: &Connection, percentage: u8) {
+    let obj_server = conn.object_server();
+    if let Ok(iface_ref) = obj_server
+        .interface::<_, BatteryDevice>(dbus::DEVICE0_PATH)
+        .await
+    {
+        let _ = BatteryDevice::battery_low(iface_ref.signal_emitter(), percentage).await;
+    }
+}
+
+async fn emit_battery_full(conn: &Connection) {
+    let obj_server = conn.object_server();
+    if let Ok(iface_ref) = obj_server
+        .interface::<_, BatteryDevice>(dbus::DEVICE0_PATH)
+        .await
+    {
+        let _ = BatteryDevice::battery_full(iface_ref.signal_emitter()).await;
+    }
 }
 
 async fn set_not_present(conn: &Connection, state: &Arc<Mutex<BatteryState>>) {
