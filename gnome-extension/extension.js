@@ -60,6 +60,10 @@ export default class AsusMouseBatteryExtension extends Extension {
         this._indicator.menu.addMenuItem(this._statusItem);
         this._indicator.menu.addMenuItem(this._timeItem);
         this._indicator.menu.addMenuItem(this._voltageItem);
+        this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this._versionItem = new PopupMenu.PopupMenuItem('');
+        this._versionItem.sensitive = false;
+        this._indicator.menu.addMenuItem(this._versionItem);
 
         Main.panel.addToStatusArea(this.uuid, this._indicator);
         this._indicator.hide();
@@ -162,10 +166,14 @@ export default class AsusMouseBatteryExtension extends Extension {
             this._label.text = `${pct}%`;
 
             // Popup rows
-            this._nameItem.label.text    = name;
-            this._statusItem.label.text  = `Status: ${_formatStatus(status)}`;
-            this._timeItem.label.text    = `Time: ${_formatTime(status, ttf, tte)}`;
-            this._voltageItem.label.text = `Voltage: ${vmv > 0 ? `${vmv} mV` : '—'}`;
+            const daemonVer = this._proxy.get_cached_property('DaemonVersion')?.unpack() ?? '—';
+
+            this._nameItem.label.text          = name;
+            this._statusItem.label.text        = `Status: ${_formatStatus(status)}`;
+            this._timeItem.label.text          = `Time: ${_formatTime(status, ttf, tte)}`;
+            this._voltageItem.label.text       = `Voltage: ${vmv > 0 ? `${vmv} mV` : '—'}`;
+            const extVer = this.metadata['version-name'] ?? this.metadata.version;
+            this._versionItem.label.text = `Daemon: v${daemonVer}  ·  Extension: v${extVer}`;
 
             this._indicator.show();
         } catch (e) {

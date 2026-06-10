@@ -54,6 +54,11 @@ impl BatteryDevice {
         self.state.lock().unwrap().is_present
     }
 
+    #[zbus(property)]
+    async fn daemon_version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+
     #[zbus(signal)]
     pub async fn battery_changed(
         emitter: &SignalEmitter<'_>,
