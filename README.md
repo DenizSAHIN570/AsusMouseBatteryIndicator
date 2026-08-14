@@ -46,7 +46,7 @@ git pull
 | Component | Description |
 |-----------|-------------|
 | `daemon/` | Rust background service. Queries HID, exposes DBus, sends notifications. |
-| `gnome-extension/` | GNOME Shell 45–49 indicator. Reads daemon via DBus. |
+| `gnome-extension/` | GNOME Shell 45–50 indicator. Reads daemon via DBus. |
 | `udev/` | udev rule for persistent hidraw permissions. |
 | `systemd/` | User-level systemd service unit. |
 
