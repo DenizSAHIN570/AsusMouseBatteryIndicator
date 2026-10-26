@@ -25,6 +25,23 @@ impl AsusDevice {
     }
 }
 
+/// Below this level a "fully charged" status byte is not believed.
+const FULL_MIN_PERCENT: u8 = 95;
+
+/// Status from the raw electrical byte. The firmware has been seen reporting 0x02 (fully
+/// charged) at 70% / 3.94 V while on battery, so that claim only counts near the top.
+fn decode_status(byte: u8, cable_connected: bool, percentage: u8) -> BatteryStatus {
+    if cable_connected {
+        return BatteryStatus::Charging;
+    }
+    match byte {
+        0x01 => BatteryStatus::Charging,
+        0x02 if percentage >= FULL_MIN_PERCENT => BatteryStatus::FullyCharged,
+        0x02 | 0x03 => BatteryStatus::Discharging,
+        _ => BatteryStatus::Unknown,
+    }
+}
+
 impl MouseDevice for AsusDevice {
     fn query_battery(&self) -> Result<BatteryReading> {
         // 64-byte write: report-ID prefix (0x00) + command 0x12 0x07 + 61 zero bytes.
@@ -69,21 +86,43 @@ impl MouseDevice for AsusDevice {
 
         // Initial status from the raw bytes; the poll loop may override this
         // to Discharging if voltage is falling despite the cable being connected.
-        let status = if cable_connected {
-            BatteryStatus::Charging
-        } else {
-            match buf[5] {
-                0x01 => BatteryStatus::Charging,
-                0x02 => BatteryStatus::FullyCharged,
-                0x03 => BatteryStatus::Discharging,
-                _    => BatteryStatus::Unknown,
-            }
-        };
+        let status = decode_status(buf[5], cable_connected, percentage);
 
         tracing::debug!(
             "ASUS query → {percentage}% {} voltage={voltage_mv}mV cable={cable_connected}",
             status.as_str()
         );
         Ok(BatteryReading { percentage, status, voltage_mv, cable_connected })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn full_byte_at_70_percent_is_not_fully_charged() {
+        // Seen live: byte 0x02, 70%, 3940 mV, no cable.
+        assert_eq!(decode_status(0x02, false, 70), BatteryStatus::Discharging);
+    }
+
+    #[test]
+    fn full_byte_near_top_is_fully_charged() {
+        assert_eq!(decode_status(0x02, false, 95), BatteryStatus::FullyCharged);
+        assert_eq!(decode_status(0x02, false, 100), BatteryStatus::FullyCharged);
+        assert_eq!(decode_status(0x02, false, 94), BatteryStatus::Discharging);
+    }
+
+    #[test]
+    fn cable_always_means_charging() {
+        assert_eq!(decode_status(0x03, true, 50), BatteryStatus::Charging);
+        assert_eq!(decode_status(0x02, true, 100), BatteryStatus::Charging);
+    }
+
+    #[test]
+    fn other_bytes() {
+        assert_eq!(decode_status(0x01, false, 50), BatteryStatus::Charging);
+        assert_eq!(decode_status(0x03, false, 50), BatteryStatus::Discharging);
+        assert_eq!(decode_status(0x07, false, 50), BatteryStatus::Unknown);
     }
 }
