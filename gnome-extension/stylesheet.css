@@ -1,11 +1,112 @@
-.battery-green {
+/* ── Top bar ─────────────────────────────────────────────────────────── */
+
+.battery-green  { color: #57e389; }
+.battery-orange { color: #ff7800; }
+.battery-red    { color: #e01b24; }
+
+/* ── Popup shell ─────────────────────────────────────────────────────────
+   GNOME draws the popup in .popup-menu-content (20px radius, system background and
+   border). Keep those, only square the corners and drop the padding. */
+
+.mouse-menu-box {
+    padding: 0;
+    border-radius: 3px;
+}
+
+.mouse-menu-item {
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+}
+
+.mouse-pop {
+    padding: 10px;
+    spacing: 10px;
+}
+
+.mouse-cards {
+    spacing: 6px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+
+.mouse-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.mouse-sub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.50);
+}
+
+.mouse-chip {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+.mouse-chip.mouse-accent-green {
+    background-color: rgba(87, 227, 137, 0.16);
     color: #57e389;
 }
 
-.battery-orange {
-    color: #ff7800;
+.mouse-chip.mouse-accent-orange {
+    background-color: rgba(255, 120, 0, 0.16);
+    color: #ff9a3c;
 }
 
-.battery-red {
-    color: #e01b24;
+.mouse-chip.mouse-accent-red {
+    background-color: rgba(224, 27, 36, 0.22);
+    color: #ff6b6b;
+}
+
+/* ── Battery card ────────────────────────────────────────────────────── */
+
+.mouse-card {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-radius: 3px;
+    padding: 10px 12px;
+}
+
+.mouse-lbl {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.mouse-big {
+    font-size: 34px;
+    font-weight: bold;
+    letter-spacing: -1px;
+    margin-top: 4px;
+}
+
+.mouse-est {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 2px;
+}
+
+/* Battery segments: 20 x 5% */
+
+.mouse-segments {
+    spacing: 2px;
+}
+
+.mouse-seg {
+    width: 8px;
+    height: 14px;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-radius: 1px;
+}
+
+.mouse-accent-green  .mouse-seg-on { background-color: #57e389; }
+.mouse-accent-orange .mouse-seg-on { background-color: #ff7800; }
+.mouse-accent-red    .mouse-seg-on { background-color: #e01b24; }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.mouse-footer {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.38);
 }

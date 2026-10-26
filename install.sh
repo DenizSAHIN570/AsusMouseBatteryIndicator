@@ -93,6 +93,7 @@ info "Installing GNOME extension…"
 mkdir -p "$EXTENSION_DEST"
 cp "$EXTENSION_SRC/metadata.json" \
    "$EXTENSION_SRC/extension.js" \
+   "$EXTENSION_SRC/format.js" \
    "$EXTENSION_SRC/stylesheet.css" \
    "$EXTENSION_DEST/"
 if command -v gnome-extensions &>/dev/null; then

@@ -7,7 +7,7 @@ BINARY_PATH="$HOME/.local/bin/$BINARY_NAME"
 SERVICE_FILE="$HOME/.config/systemd/user/$BINARY_NAME.service"
 UDEV_RULE="/etc/udev/rules.d/99-mouse-battery.rules"
 EXTENSION_DEST="$HOME/.local/share/gnome-shell/extensions/asus-mouse-battery-icon@gnome"
-EXTENSION_FILES=("metadata.json" "extension.js" "stylesheet.css")
+EXTENSION_FILES=("metadata.json" "extension.js" "format.js" "stylesheet.css")
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

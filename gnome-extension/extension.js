@@ -4,38 +4,48 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import Pango from 'gi://Pango';
 import St from 'gi://St';
+
+import {
+    batteryIconName, batteryColorClass, accentClass, formatStatus,
+    formatEstimate, formatVoltage, litSegments,
+} from './format.js';
 
 const DBUS_NAME  = 'com.mousewatch.Battery';
 const DBUS_PATH  = '/com/mousewatch/Battery/device0';
 const DBUS_IFACE = 'com.mousewatch.Battery1';
 
-function _formatStatus(status) {
-    const labels = {
-        'charging': 'Charging',
-        'discharging': 'Discharging',
-        'fully-charged': 'Fully charged',
-        'unknown': 'Unknown',
-    };
-    return labels[status] ?? status;
+const POPUP_WIDTH = 380;
+const SEGMENTS = 20;
+const ACCENTS = ['mouse-accent-green', 'mouse-accent-orange', 'mouse-accent-red'];
+
+function setAccent(actor, accent) {
+    ACCENTS.forEach(c => actor.remove_style_class_name(c));
+    actor.add_style_class_name(accent);
 }
 
-function _formatTime(status, timeToFull, timeToEmpty) {
-    if (status === 'fully-charged' || status === 'unknown') return '—';
-    const seconds = status === 'charging' ? timeToFull : timeToEmpty;
-    const suffix = status === 'charging' ? 'to full' : 'to empty';
-    if (seconds === 0) return 'Calculating…';
-    const d = Math.floor(seconds / 86400);
-    const h = Math.floor((seconds % 86400) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    if (d > 0) return `${d}d ${h}h ${m}m ${suffix}`;
-    return h > 0 ? `${h}h ${m}m ${suffix}` : `${m}m ${suffix}`;
+function makeLabel(text, styleClass) {
+    const label = new St.Label({text, style_class: styleClass, y_align: Clutter.ActorAlign.CENTER});
+    // Never cut text short with an ellipsis; the rows have room.
+    label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+    return label;
+}
+
+function makeSpacer() {
+    return new St.Widget({x_expand: true});
+}
+
+function makeRow(...children) {
+    const row = new St.BoxLayout({x_expand: true});
+    children.forEach(c => row.add_child(c));
+    return row;
 }
 
 export default class AsusMouseBatteryExtension extends Extension {
     enable() {
         // Indicator button
-        this._indicator = new PanelMenu.Button(0.0, 'ASUS Mouse Battery', false);
+        this._indicator = new PanelMenu.Button(0.5, 'ASUS Mouse Battery', false);
 
         this._box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
         this._icon = new St.Icon({
@@ -50,20 +60,7 @@ export default class AsusMouseBatteryExtension extends Extension {
         this._box.add_child(this._label);
         this._indicator.add_child(this._box);
 
-        // Popup menu rows
-        this._nameItem = new PopupMenu.PopupMenuItem('');
-        this._indicator.menu.addMenuItem(this._nameItem);
-        this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._statusItem = new PopupMenu.PopupMenuItem('');
-        this._timeItem = new PopupMenu.PopupMenuItem('');
-        this._voltageItem = new PopupMenu.PopupMenuItem('');
-        this._indicator.menu.addMenuItem(this._statusItem);
-        this._indicator.menu.addMenuItem(this._timeItem);
-        this._indicator.menu.addMenuItem(this._voltageItem);
-        this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._versionItem = new PopupMenu.PopupMenuItem('');
-        this._versionItem.sensitive = false;
-        this._indicator.menu.addMenuItem(this._versionItem);
+        this._buildPopup(this._indicator.menu);
 
         Main.panel.addToStatusArea(this.uuid, this._indicator);
         this._indicator.hide();
@@ -115,6 +112,56 @@ export default class AsusMouseBatteryExtension extends Extension {
         }
         this._indicator?.destroy();
         this._indicator = null;
+        this._w = null;
+    }
+
+    /** Header, battery card and footer, as one non-interactive item. */
+    _buildPopup(menu) {
+        // GNOME draws the popup in .popup-menu-content (20px radius); this class squares it
+        // off and drops its padding so our own card layout supplies the spacing.
+        menu.box.add_style_class_name('mouse-menu-box');
+
+        const w = this._w = {};
+        const pop = new St.BoxLayout({vertical: true, style_class: 'mouse-pop', width: POPUP_WIDTH});
+
+        // Header: name + voltage on the left, status chip on the right
+        const titles = new St.BoxLayout({vertical: true});
+        w.name = makeLabel('', 'mouse-name');
+        w.sub = makeLabel('', 'mouse-sub');
+        titles.add_child(w.name);
+        titles.add_child(w.sub);
+        w.chip = makeLabel('', 'mouse-chip');
+        pop.add_child(makeRow(titles, makeSpacer(), w.chip));
+
+        // Battery card: big number left, 20 segments (5% each) right
+        const cards = new St.BoxLayout({vertical: true, style_class: 'mouse-cards'});
+        const battery = new St.BoxLayout({style_class: 'mouse-card'});
+        const batteryText = new St.BoxLayout({vertical: true});
+        batteryText.add_child(makeLabel('BATTERY', 'mouse-lbl'));
+        w.big = new St.Label({style_class: 'mouse-big', y_align: Clutter.ActorAlign.CENTER});
+        batteryText.add_child(w.big);
+        w.estimate = makeLabel('', 'mouse-est');
+        batteryText.add_child(w.estimate);
+        w.segments = new St.BoxLayout({style_class: 'mouse-segments', y_align: Clutter.ActorAlign.CENTER});
+        w.segs = [];
+        for (let i = 0; i < SEGMENTS; i++) {
+            const seg = new St.Widget({style_class: 'mouse-seg'});
+            w.segs.push(seg);
+            w.segments.add_child(seg);
+        }
+        battery.add_child(batteryText);
+        battery.add_child(makeSpacer());
+        battery.add_child(w.segments);
+        cards.add_child(battery);
+        pop.add_child(cards);
+
+        w.footer = makeLabel('', 'mouse-footer');
+        pop.add_child(w.footer);
+
+        const item = new PopupMenu.PopupBaseMenuItem({reactive: false, can_focus: false});
+        item.add_style_class_name('mouse-menu-item');
+        item.add_child(pop);
+        menu.addMenuItem(item);
     }
 
     _update() {
@@ -138,42 +185,34 @@ export default class AsusMouseBatteryExtension extends Extension {
             const vmv    = this._proxy.get_cached_property('VoltageMv')?.unpack()   ?? 0;
             const name   = this._proxy.get_cached_property('DeviceName')?.unpack()  ?? '';
 
-            // Icon
-            let iconName;
-            if (status === 'fully-charged') {
-                iconName = 'battery-full-charged-symbolic';
-            } else if (pct > 50) {
-                iconName = 'battery-full-symbolic';
-            } else if (pct > 10) {
-                iconName = 'battery-good-symbolic';
-            } else {
-                iconName = 'battery-caution-symbolic';
-            }
-            this._icon.icon_name = iconName;
-
-            // Colour class
+            // Top bar
+            this._icon.icon_name = batteryIconName(pct, status);
             ['battery-green', 'battery-orange', 'battery-red'].forEach(c =>
                 this._box.remove_style_class_name(c));
-            if (status === 'fully-charged' || pct > 50) {
-                this._box.add_style_class_name('battery-green');
-            } else if (pct > 10) {
-                this._box.add_style_class_name('battery-orange');
-            } else {
-                this._box.add_style_class_name('battery-red');
-            }
-
-            // Top-bar label
+            this._box.add_style_class_name(batteryColorClass(pct, status));
             this._label.text = `${pct}%`;
 
-            // Popup rows
-            const daemonVer = this._proxy.get_cached_property('DaemonVersion')?.unpack() ?? '—';
+            // Popup
+            const w = this._w;
+            const accent = accentClass(pct, status);
+            w.name.text = name;
+            w.sub.text = formatVoltage(vmv);
+            w.chip.text = formatStatus(status);
+            setAccent(w.chip, accent);
+            w.big.clutter_text.set_markup(`${pct}<span size="smaller">%</span>`);
+            setAccent(w.segments, accent);
+            const lit = litSegments(pct);
+            w.segs.forEach((seg, i) => {
+                if (i < lit)
+                    seg.add_style_class_name('mouse-seg-on');
+                else
+                    seg.remove_style_class_name('mouse-seg-on');
+            });
+            w.estimate.text = formatEstimate(status, tte, ttf);
 
-            this._nameItem.label.text          = name;
-            this._statusItem.label.text        = `Status: ${_formatStatus(status)}`;
-            this._timeItem.label.text          = `Time: ${_formatTime(status, ttf, tte)}`;
-            this._voltageItem.label.text       = `Voltage: ${vmv > 0 ? `${vmv} mV` : '—'}`;
+            const daemonVer = this._proxy.get_cached_property('DaemonVersion')?.unpack() ?? '—';
             const extVer = this.metadata['version-name'] ?? this.metadata.version;
-            this._versionItem.label.text = `Daemon: v${daemonVer}  ·  Extension: v${extVer}`;
+            w.footer.text = `Daemon v${daemonVer}  ·  Extension v${extVer}`;
 
             this._indicator.show();
         } catch (e) {

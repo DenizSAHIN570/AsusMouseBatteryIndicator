@@ -273,12 +273,11 @@ journalctl --user -u mouse-battery -f
 
 ## GNOME Extension
 
-The extension (`asus-mouse-battery-icon@gnome`) shows a coloured battery icon with percentage in the top bar. Click it to see:
+The extension (`asus-mouse-battery-icon@gnome`) shows a coloured battery icon with percentage in the top bar. Click it for a card-style popup:
 
-- Device name
-- Charging status
-- Time to full / time to empty
-- Battery voltage (mV)
+- Header: device name, battery voltage, and a status chip (Charging / Discharging / Fully charged)
+- Battery card: large percentage, time to full / time to empty, and a 20-segment bar (5% per segment)
+- Footer: daemon and extension versions
 
 Colour thresholds:
 
